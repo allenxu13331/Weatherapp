@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Atmos — Weather by Allen Xu</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+<!-- btw you can use emojipedia to find the emojis for the weather-->
+<div class="bg-grid"></div>
+<div class="bg-orb bg-orb-1"></div>
+<div class="bg-orb bg-orb-2"></div>
+
+<div class="container">
+
+  <header>
+    <div class="logo">ATMOS<span>Weather by Allen Xu</span></div>
+    <button class="about-btn" onclick="toggleModal()">about / PM accelerator</button>
+  </header>
+
+  <!-- 3 tabs that tell you the respective features (current, forecast & history, weather AI)-->
+  <div class="mode-tabs">
+    <button class="mode-tab active" onclick="setMode('current')" id="tab-current">Today</button>
+    <button class="mode-tab" onclick="setMode('range')" id="tab-range">Forecast &amp; History</button>
+    <button class="mode-tab" onclick="setMode('outfit')" id="tab-outfit">Weather Assistant</button>
+  </div>
+
+  <!-- This is the search bar -->
+  <div class="search-section">
+    <div class="search-row">
+      <div class="search-wrap">
+        <span class="search-icon">🔍</span>
+        <input type="text" id="search-input" placeholder="City, zip code, landmark, GPS coords…" onkeydown="if(event.key==='Enter') handleSearch()" />
+      </div>
+      <div class="date-wrap" id="date-wrap" style="display:none;">
+        <div class="date-group"><label>Date</label><input type="date" id="date-start" /></div>
+        <div class="date-group" id="date-end-group" style="display:none;"><label>To</label><input type="date" id="date-end" /></div>
+      </div>
+      <button class="btn btn-primary" id="search-btn" onclick="handleSearch()">Search</button>
+      <button class="btn btn-secondary" id="loc-btn" onclick="getLocation()" title="Use my location">📍</button>
+    </div>
+    <div class="error-box" id="error-box"><span>⚠️</span><span id="error-msg"></span></div>
+  </div>
+
+  <div class="loading" id="loading"><div class="spinner"></div><div id="loading-msg">Fetching weather data…</div></div>
+
+  <!-- What is in the Today tab of the app -->
+  <div id="current-view" style="display:none;">
+    <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:.5rem;margin-bottom:1rem;">
+      <div class="unit-toggle">
+        <button class="unit-btn active" id="btn-c" onclick="setUnit('C')">°C</button>
+        <button class="unit-btn" id="btn-f" onclick="setUnit('F')">°F</button>
+      </div>
+    </div>
+    <div class="current-card">
+      <div class="loc-row">
+        <div class="loc-name" id="loc-name">—<span id="loc-sub"></span></div>
+        <div class="updated-time" id="updated-time"></div>
+      </div>
+      <div class="main-temp-row">
+        <div class="weather-emoji" id="main-emoji">⛅</div>
+        <div class="temp-block">
+          <div class="temp-value" id="main-temp">—</div>
+          <div class="weather-desc" id="main-desc">—</div>
+          <div class="temp-feel" id="temp-feel">Feels like —</div>
+        </div>
+      </div>
+      <div class="stats-grid">
+        <div class="stat-item"><div class="stat-label">💧 Humidity</div><div class="stat-value" id="s-humidity">—</div></div>
+        <div class="stat-item"><div class="stat-label">💨 Wind</div><div class="stat-value" id="s-wind">—</div></div>
+        <div class="stat-item"><div class="stat-label">👁 Visibility</div><div class="stat-value" id="s-vis">—</div></div>
+        <div class="stat-item"><div class="stat-label">🌡 Pressure</div><div class="stat-value" id="s-pressure">—</div></div>
+        <div class="stat-item"><div class="stat-label">☁️ Cloud Cover</div><div class="stat-value" id="s-cloud">—</div></div>
+        <div class="stat-item"><div class="stat-label">🌧 Precip</div><div class="stat-value" id="s-precip">—</div></div>
+      </div>
+      <div class="sun-row">
+        <div class="sun-item">🌅 Sunrise <strong id="s-sunrise">—</strong></div>
+        <div class="sun-item">🌇 Sunset <strong id="s-sunset">—</strong></div>
+      </div>
+    </div>
+    <div class="section-title">5-day forecast</div>
+    <p class="section-hint">Click a day for full details.</p>
+    <div class="forecast-grid" id="forecast-grid"></div>
+    <div class="chart-card">
+      <div class="section-title">Temperature Trend</div>
+      <canvas id="forecast-chart" height="110"></canvas>
+    </div>
+  </div>
+
+  <!-- What is in the Forecast & History tab of the app -->
+  <div id="range-view" style="display:none;">
+    <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:.5rem;margin-bottom:1rem;">
+      <div class="unit-toggle">
+        <button class="unit-btn active" id="rbtn-c" onclick="setUnit('C')">°C</button>
+        <button class="unit-btn" id="rbtn-f" onclick="setUnit('F')">°F</button>
+      </div>
+      <div style="font-size:.8rem;color:var(--muted)" id="range-loc-label"></div>
+    </div>
+    <div class="section-title">Daily Breakdown</div>
+    <p class="section-hint">Click a day for full details.</p>
+    <div id="day-breakdown"></div>
+    <div class="section-title">Summary Table</div>
+    <div class="table-wrap">
+      <table class="data-table">
+        <thead><tr><th>Date</th><th>High</th><th>Low</th><th>Wind</th><th>Precip</th><th>Conditions</th></tr></thead>
+        <tbody id="range-table-body"></tbody>
+      </table>
+    </div>
+    <div class="chart-card">
+      <div class="section-title">High / Low Temperature Chart</div>
+      <canvas id="range-chart" height="130"></canvas>
+    </div>
+  </div>
+
+  <!-- What is in the Weather Assistant tab of the app -->
+  <div id="outfit-view" style="display:none;">
+    <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:.5rem;margin-bottom:1rem;">
+      <div class="unit-toggle">
+        <button class="unit-btn active" id="obtn-c" onclick="setUnit('C')">°C</button>
+        <button class="unit-btn" id="obtn-f" onclick="setUnit('F')">°F</button>
+      </div>
+    </div>
+    <div class="current-card" id="outfit-weather-card" style="display:none;">
+      <div class="loc-row">
+        <div class="loc-name" id="outfit-loc">—<span id="outfit-sub"></span></div>
+        <div class="updated-time" id="outfit-date-label"></div>
+      </div>
+      <div class="main-temp-row">
+        <div class="weather-emoji" id="outfit-emoji">⛅</div>
+        <div class="temp-block">
+          <div class="temp-value" id="outfit-temp">—</div>
+          <div class="weather-desc" id="outfit-desc">—</div>
+          <div class="temp-feel" id="outfit-feel">—</div>
+        </div>
+      </div>
+      <div class="sun-row">
+        <div class="sun-item">🌅 Sunrise <strong id="outfit-sunrise">—</strong></div>
+        <div class="sun-item">🌇 Sunset <strong id="outfit-sunset">—</strong></div>
+      </div>
+    </div>
+    <div class="ai-panel" id="ai-panel" style="display:none;">
+      <div class="ai-panel-header">
+        <span class="ai-badge">✨ Smart Suggestions</span>
+        <span class="ai-title">What should I wear today?</span>
+      </div>
+      <div class="ai-response" id="ai-response"></div>
+      <div class="ai-thread" id="ai-thread" aria-live="polite"></div>
+      <div class="ai-followup-section">
+        <span class="ai-followup-label">Follow-up</span>
+        <p class="ai-followup-hint">Weather for this load, meteorology (e.g. jet stream), clothes, general activity ideas, or “can we do X in this weather?”</p>
+        <textarea id="ai-followup-input" class="ai-followup-input" placeholder="Example: Can we picnic in this weather?&#10;Or: What activities make sense today?"></textarea>
+        <div class="ai-followup-actions">
+          <button type="button" class="btn btn-secondary" id="ai-followup-clear" onclick="clearOutfitThread()">Clear chat</button>
+          <button type="button" class="btn btn-primary" id="ai-followup-send" onclick="sendOutfitFollowup()">Send</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- This is the About button on the app -->
+<div class="modal-overlay" id="modal-overlay" onclick="if(event.target===this)toggleModal()">
+  <div class="modal">
+    <div class="modal-title">About Atmos</div>
+    <p><strong>Built by Allen Xu</strong> as part of the PM Accelerator technical assessment.</p>
+    <p><strong>PM Accelerator</strong> is a product management training and career accelerator program. It helps aspiring and current product managers build real-world skills through mentorship, hands-on projects, and a global community. The program prepares PMs to excel across industries by focusing on product strategy, execution, stakeholder management, and data-driven decision making.</p>
+    <p style="font-size:.75rem;color:var(--muted);">Weather data: <a href="https://open-meteo.com" target="_blank" style="color:var(--accent)">Open‑Meteo</a> (geocoding, daily past + future up to 16 days) and optionally <a href="https://openweathermap.org" target="_blank" style="color:var(--accent)">OpenWeather</a> <strong>current</strong> conditions only on the Today tab for live temp, feels like, humidity, wind, pressure, and visibility.</p>
+    <button class="modal-close" onclick="toggleModal()">Close</button>
+  </div>
+</div>
+
+<!-- Tells you about the 5-day forecast in the Today tab -->
+<div class="modal-overlay" id="forecast-day-overlay" role="dialog" aria-modal="true" aria-labelledby="forecast-day-title" onclick="if(event.target===this)closeForecastDayModal()">
+  <div class="modal forecast-day-modal" onclick="event.stopPropagation()">
+    <div class="modal-title" id="forecast-day-title"></div>
+    <div id="forecast-day-body"></div>
+    <button type="button" class="modal-close" onclick="closeForecastDayModal()">Close</button>
+  </div>
+</div>
+
+<!-- see config.example.js for the OpenWeather key -->
+<script src="config.js"></script>
+
+<!-- App scripts that are in dependency order -->
+<script src="js/utils.js"></script>
+<script src="js/ui.js"></script>
+<script src="js/api.js"></script>
+<script src="js/render.js"></script>
+<script src="js/chat.js"></script>
+<script src="js/main.js"></script>
+
+</body>
+</html>

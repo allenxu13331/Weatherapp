@@ -1,0 +1,14 @@
+# PM Accelerator submission — dependency listing
+#
+# This project has NO Python packages and NO npm package.json.
+# It runs in the browser with vanilla JavaScript.
+#
+# External libraries (see index.html <script> / <link> tags):
+#   - Chart.js 4.4.1  —  https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js
+#   - Google Fonts    —  Syne, DM Mono (fonts.googleapis.com)
+#
+# External APIs (network at runtime):
+#   - Open-Meteo       —  geocoding, forecast, historical archive (no key)
+#   - OpenWeather      —  optional current weather (API key in config.js)
+#
+# To run locally: open index.html or serve this directory with any static HTTP server.
