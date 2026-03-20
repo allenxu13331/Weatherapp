@@ -1,6 +1,7 @@
 # Atmos — Weather App
 
 **Author:** Allen Xu
+
 Built for the **PM Accelerator** technical assessment.
 
 ---
