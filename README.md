@@ -120,3 +120,7 @@ atmos/
 ## API Key Security
 
 `config.js` is listed in `.gitignore` so your key is never committed to GitHub. Reviewers should copy `config.example.js` to `config.js` and add their own key.
+
+## Demo Video
+
+A demo video on Atmos is available here: https://www.loom.com/share/76383f75274645a58c6a466a289d24be
